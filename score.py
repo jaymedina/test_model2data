@@ -92,7 +92,10 @@ if __name__ == "__main__":
     goldstandard = sys.argv[2]
     result_path = sys.argv[3]
 
-    status = result_path["validation_status"]
+    with open(result_path, encoding="utf-8") as out:
+        res = json.load(out)
+
+    status = res.get("validation_status")
 
     score_status, result = score_submission(predictions_path, status)
     update_json(result_path, result)
