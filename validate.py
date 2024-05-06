@@ -9,6 +9,7 @@ import zipfile
 if __name__ == "__main__":
     predictions_path = sys.argv[1]
     goldstandard_path = sys.argv[2]
+    results_filename = sys.argv[3]
 
     invalid_reasons = []
     if "INVALID" in predictions_path:
@@ -50,6 +51,6 @@ if __name__ == "__main__":
         "validation_errors": ";".join(invalid_reasons),
     }
 
-    with open("results.json", "w") as o:
+    with open(results_filename, "w") as o:
         o.write(json.dumps(result))
     print(prediction_status)
