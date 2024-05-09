@@ -1,12 +1,11 @@
-
 #!/usr/bin/env python3
 
 import glob
 import json
 import os
-import sys
-import typing
 import zipfile
+import argparse
+import typing
 
 
 INVALID = "INVALID"
@@ -27,8 +26,7 @@ def score_submission(predictions_path: str, status: str) -> typing.Tuple[str, di
         score1, score2, score3 = None, None, None
         message = f"Submission was not scored due to {INVALID} status"
     else:
-        # Unzipping the predictions and extracting the files in
-        # the current working directory
+        # Unzipping the predictions and extracting the files in the current working directory
         if ".zip" in os.path.basename(predictions_path):
             with zipfile.ZipFile(predictions_path, "r") as zip_ref:
                 for zip_info in zip_ref.infolist():
@@ -47,13 +45,13 @@ def score_submission(predictions_path: str, status: str) -> typing.Tuple[str, di
             message = "No predictions files found"
             score1, score2, score3 = None, None, None
 
-        # placeholder file reading
+        # Placeholder file reading
         for file in predictions_files:
             with open(file, "r") as sub_file:
                 predictions_contents = sub_file.read()
 
         try:
-            # placeholder scoring
+            # Placeholder scoring
             score1 = 1 + 1
             score2 = score1 * 2
             score3 = score1 * 3
@@ -63,6 +61,7 @@ def score_submission(predictions_path: str, status: str) -> typing.Tuple[str, di
             message = f"Error {e} occurred while scoring"
             score1, score2, score3 = None, None, None
             score_status = INVALID
+
     result = {
         "score1": score1,
         "score2": score2,
@@ -70,6 +69,7 @@ def score_submission(predictions_path: str, status: str) -> typing.Tuple[str, di
         "score_status": score_status,
         "score_errors": message,
     }
+
     return score_status, result
 
 
@@ -87,16 +87,29 @@ def update_json(results_path: str, result: dict) -> None:
         o.write(json.dumps(data))
 
 
-if __name__ == "__main__":
-    predictions_path = sys.argv[1]
-    goldstandard = sys.argv[2]
-    result_path = sys.argv[3]
+def main():
+    # Argument parser setup
+    parser = argparse.ArgumentParser(description="Score predictions file and update the results JSON.")
+    parser.add_argument('-p', '--predictions_file', required=True, help="Path to the predictions file (or zip containing predictions)")
+    parser.add_argument('-g', '--goldstandard', required=True, help="Path to the gold standard file or folder (not used here but included for consistency)")
+    parser.add_argument('-o', '--output', required=True, help="Output file path for the validation results JSON")
 
+    # Parsing command line arguments
+    args = parser.parse_args()
+    predictions_path = args.predictions_file
+    result_path = args.output
+
+    # Read validation status from the results JSON
     with open(result_path, encoding="utf-8") as out:
         res = json.load(out)
 
     status = res.get("validation_status")
 
+    # Score the submission and update the JSON output
     score_status, result = score_submission(predictions_path, status)
     update_json(result_path, result)
     print(score_status)
+
+
+if __name__ == "__main__":
+    main()
