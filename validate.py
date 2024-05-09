@@ -3,13 +3,21 @@
 import glob
 import json
 import os
-import sys
 import zipfile
+import argparse
 
-if __name__ == "__main__":
-    predictions_path = sys.argv[1]
-    goldstandard_path = sys.argv[2]
-    results_filename = sys.argv[3]
+def main():
+    # Argument parser setup
+    parser = argparse.ArgumentParser(description="Validate prediction files against a gold standard.")
+    parser.add_argument('-p', '--predictions_file', required=True, help="Path to the predictions file (or zip containing predictions)")
+    parser.add_argument('-g', '--goldstandard_folder', required=True, help="Folder containing the gold standard file")
+    parser.add_argument('-o', '--output', required=True, help="Output file name for the validation results")
+
+    # Parsing command line arguments
+    args = parser.parse_args()
+    predictions_path = args.predictions_file
+    goldstandard_path = args.goldstandard_folder
+    results_filename = args.output
 
     invalid_reasons = []
     if "INVALID" in predictions_path:
@@ -17,8 +25,7 @@ if __name__ == "__main__":
         with open(predictions_path, "r") as file:
             invalid_reasons.append(file.read())
     else:
-        # Unzipping the predictions and extracting the files in
-        # the current working directory
+        # Unzipping the predictions and extracting the files in the current working directory
         if ".zip" in os.path.basename(predictions_path):
             with zipfile.ZipFile(predictions_path, "r") as zip_ref:
                 for zip_info in zip_ref.infolist():
@@ -38,7 +45,7 @@ if __name__ == "__main__":
         with open(gs_file, "r") as sub_file:
             message = sub_file.read()
 
-        # Validating file contents
+        # Validating predictions files
         for file in predictions_files:
             with open(file, "r") as sub_file:
                 message = sub_file.read()
@@ -46,11 +53,16 @@ if __name__ == "__main__":
             if message is None:
                 prediction_status = "INVALID"
                 invalid_reasons.append("At least one predictions file is empty")
+    
     result = {
         "validation_status": prediction_status,
         "validation_errors": ";".join(invalid_reasons),
     }
 
+    # Writing results to the output file
     with open(results_filename, "w") as o:
         o.write(json.dumps(result))
     print(prediction_status)
+
+if __name__ == "__main__":
+    main()
